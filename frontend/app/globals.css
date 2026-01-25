@@ -1,0 +1,67 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 0 0% 0%;
+    /* Pitch Black */
+    --foreground: 0 0% 95%;
+    /* Neutral Light */
+
+    --card: 0 0% 4%;
+    /* Slightly lighter than black */
+    --card-foreground: 0 0% 95%;
+
+    --popover: 0 0% 4%;
+    --popover-foreground: 0 0% 95%;
+
+    --primary: 346.8 77.2% 49.8%;
+    /* Rose 600 */
+    --primary-foreground: 355.7 100% 97.3%;
+
+    --secondary: 240 3.7% 15.9%;
+    --secondary-foreground: 0 0% 98%;
+
+    --muted: 240 3.7% 15.9%;
+    --muted-foreground: 240 5% 64.9%;
+
+    --accent: 240 3.7% 15.9%;
+    --accent-foreground: 0 0% 98%;
+
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 0 0% 98%;
+
+    --border: 240 3.7% 15.9%;
+    --input: 240 3.7% 15.9%;
+    --ring: 346.8 77.2% 49.8%;
+    /* Rose Ring */
+
+    --radius: 0.75rem;
+    /* Lyra/Modern feel */
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-zinc-950 text-foreground;
+    /* Fallback/Ensure dark */
+    background-color: #000000;
+  }
+}
+
+/* Custom Leaflet Dark Mode Overrides */
+.leaflet-popup-content-wrapper,
+.leaflet-popup-tip {
+  background-color: #1a1a1a !important;
+  color: #e5e5e5 !important;
+  border: 1px solid #333;
+}
+
+.leaflet-container {
+  background: #000000 !important;
+}
