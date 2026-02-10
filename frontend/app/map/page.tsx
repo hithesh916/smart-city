@@ -38,12 +38,27 @@ export default function MapPage() {
   const [showTraffic, setShowTraffic] = useState(true);
   const [showPlaces, setShowPlaces] = useState(true);
 
-  // Initial Probe (Default to New Delhi or user location)
+  // Initial Probe (User Location or Default)
   useEffect(() => {
-    // Check if we already have a location from search
     if (!searchResult) {
-      // Default: New Delhi
-      handleProbeUpdate(28.6139, 77.2090);
+      if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(
+          (pos) => {
+            const { latitude, longitude } = pos.coords;
+            // Update map view and probe
+            setSearchResult([latitude, longitude]);
+            handleProbeUpdate(latitude, longitude);
+          },
+          (err) => {
+            console.warn("Geolocation failed", err);
+            // Fallback: New Delhi
+            handleProbeUpdate(28.6139, 77.2090);
+          }
+        );
+      } else {
+        // Fallback: New Delhi
+        handleProbeUpdate(28.6139, 77.2090);
+      }
     }
   }, []);
 

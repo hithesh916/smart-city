@@ -76,11 +76,14 @@ export default function CityMap({
   };
 
   const getCongestionColor = (value: number) => {
-    if (value > 60) return "#7f0025";
-    if (value > 45) return "#ff0000";
-    if (value > 30) return "#ff7e00";
-    if (value > 15) return "#ffff00";
-    return "#00e400";
+    // User logic: Good (Green), Below Good (Yellow), Moderate (Orange), Bad (Red)
+    // Assuming value is "Congestion" (Inverse of Quality) or "Quality"?
+    // Traffic data usually maps High Congestion -> Bad.
+
+    if (value > 75) return "#ef4444"; // Red - Bad (High Congestion)
+    if (value > 50) return "#f97316"; // Orange - Moderate
+    if (value > 25) return "#eab308"; // Yellow - Below Good
+    return "#22c55e";                 // Green - Good (Low Congestion)
   };
 
   return (
