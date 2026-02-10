@@ -38,6 +38,15 @@ export default function MapPage() {
   const [showTraffic, setShowTraffic] = useState(true);
   const [showPlaces, setShowPlaces] = useState(true);
 
+  // Initial Probe (Default to New Delhi or user location)
+  useEffect(() => {
+    // Check if we already have a location from search
+    if (!searchResult) {
+      // Default: New Delhi
+      handleProbeUpdate(28.6139, 77.2090);
+    }
+  }, []);
+
   // Fetch Data based on BBox (Debounced)
   const fetchMapData = useDebouncedCallback(async (bounds: any) => {
     if (!bounds) return;
@@ -65,7 +74,7 @@ export default function MapPage() {
       }
       if (summaryRes.ok) {
         const data = await summaryRes.json();
-        setSummary(data);
+        // setSummary(data); // DISABLE: This returns a flat object that breaks the IntelligenceSidebar. Only Probe returns compatible structure.
       }
     } catch (e) {
       console.error("Failed to fetch map data", e);
