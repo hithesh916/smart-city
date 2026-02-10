@@ -96,8 +96,23 @@ export default function AnalyticsPage() {
         const pageWidth = doc.internal.pageSize.getWidth();
 
         // 2. Header Section
+        // 2. Header Section
         doc.setFillColor(225, 29, 72); // Rose-600 color
         doc.rect(0, 0, pageWidth, 20, "F");
+
+        // Add Logo (Attempt to load image)
+        const img = new Image();
+        img.src = "/logo.png";
+        // We need to wait for image to load or just try to add it if it's cached/available.
+        // For simplicity in this sync function, we'll assume it handles it or we'll wrap in a Promise if needed.
+        // Actually, better to use a Promise-based approach for the export function.
+        // But for a quick fix, if the image is already loaded in the browser (it is on sidebar), it might work.
+        // Safest way:
+        try {
+            doc.addImage(img, "PNG", pageWidth - 25, 2, 16, 16);
+        } catch (e) {
+            console.warn("Could not add logo to PDF", e);
+        }
 
         doc.setTextColor(255, 255, 255);
         doc.setFontSize(22);

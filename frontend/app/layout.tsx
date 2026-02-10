@@ -22,6 +22,9 @@ const fontBody = Inter({
 export const metadata: Metadata = {
   title: "Smart City Geospatial Intelligence",
   description: "Dashboard for monitoring smart city metrics",
+  icons: {
+    icon: "/logo.png",
+  },
 };
 
 export default function RootLayout({

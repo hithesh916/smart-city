@@ -240,7 +240,7 @@ export default function MapPage() {
   };
 
   return (
-    <div className="flex h-[calc(100vh-4rem)] w-full overflow-hidden bg-black">
+    <div className="flex flex-col md:flex-row h-[calc(100vh-4rem)] w-full overflow-hidden bg-black">
 
       {/* LEFT: Map Layer (Flex Grow) */}
       <div className="flex-1 relative border-r border-zinc-800">
@@ -285,8 +285,8 @@ export default function MapPage() {
         </div>
       </div>
 
-      {/* RIGHT: Intelligence Sidebar (Fixed Width) */}
-      <div className="w-80 h-full relative z-20 shrink-0">
+      {/* RIGHT: Intelligence Sidebar (Fixed Width Desktop, Fixed Height Mobile) */}
+      <div className="w-full md:w-80 h-2/5 md:h-full relative z-20 shrink-0 border-t md:border-t-0 md:border-l border-zinc-800">
         <div className="absolute inset-0 bg-zinc-950">
           <IntelligenceSidebar
             data={summary}
