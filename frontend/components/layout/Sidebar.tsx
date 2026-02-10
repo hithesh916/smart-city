@@ -14,6 +14,7 @@ import {
     Menu,
     ShieldCheck,
 } from "lucide-react";
+import Image from "next/image";
 import { useState } from "react";
 
 const sidebarNavItems = [
@@ -49,7 +50,7 @@ export function Sidebar({ className }: SidebarProps) {
             <div className="space-y-4 py-4">
                 <div className="px-3 py-2">
                     <div className="flex items-center px-4 mb-4">
-                        <ShieldCheck className="mr-2 h-6 w-6 text-primary" />
+                        <Image src="/logo.png" alt="Logo" width={32} height={32} className="mr-2 object-contain" />
                         <h2 className="text-lg font-semibold tracking-tight">
                             Smart City Intel
                         </h2>
@@ -93,7 +94,7 @@ export function MobileSidebar() {
             <SheetContent side="left" className="pr-0">
                 <ScrollArea className="my-4 h-[calc(100vh-8rem)] pb-10 pl-6">
                     <div className="flex items-center mb-4">
-                        <ShieldCheck className="mr-2 h-6 w-6 text-primary" />
+                        <Image src="/logo.png" alt="Logo" width={32} height={32} className="mr-2 object-contain" />
                         <span className="font-bold">Smart City Intel</span>
                     </div>
                     <div className="flex flex-col space-y-3">

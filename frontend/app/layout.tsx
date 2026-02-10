@@ -5,6 +5,7 @@ import { ThemeProvider } from "@/components/theme-provider";
 import { Sidebar } from "@/components/layout/Sidebar";
 import { Navbar } from "@/components/layout/Navbar";
 import { cn } from "@/lib/utils";
+import { IntelligenceProvider } from "@/components/providers/IntelligenceContext";
 
 const fontHeading = Inter({
   subsets: ["latin"],
@@ -43,15 +44,17 @@ export default function RootLayout({
           enableSystem
           disableTransitionOnChange
         >
-          <div className="flex min-h-screen overflow-hidden">
-            <Sidebar className="hidden md:block w-64 fixed inset-y-0" />
-            <div className="flex-1 md:pl-64 flex flex-col min-h-screen">
-              <Navbar />
-              <main className="flex-1 overflow-y-auto p-4 md:p-8">
-                {children}
-              </main>
+          <IntelligenceProvider>
+            <div className="flex min-h-screen overflow-hidden">
+              <Sidebar className="hidden md:block w-64 fixed inset-y-0" />
+              <div className="flex-1 md:pl-64 flex flex-col min-h-screen">
+                <Navbar />
+                <main className="flex-1 overflow-y-auto p-4 md:p-8">
+                  {children}
+                </main>
+              </div>
             </div>
-          </div>
+          </IntelligenceProvider>
         </ThemeProvider>
       </body>
     </html>

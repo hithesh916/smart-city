@@ -65,3 +65,50 @@
 .leaflet-container {
   background: #000000 !important;
 }
+
+/* Dark Mode Scrollbars */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: #09090b;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #27272a;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #3f3f46;
+}
+
+/* Navigator Probe - User Requested "Circle Shape Navigator" */
+.navigator-probe {
+  background: rgba(225, 29, 72, 0.1);
+  border: 2px solid #e11d48;
+  border-radius: 50%;
+  box-shadow: 0 0 15px #e11d48, inset 0 0 10px rgba(225, 29, 72, 0.5);
+  transition: all 0.3s ease;
+  cursor: crosshair !important;
+  animation: pulse-ring 2s infinite;
+}
+
+@keyframes pulse-ring {
+  0% {
+    transform: scale(1);
+    box-shadow: 0 0 0 0 rgba(225, 29, 72, 0.7);
+  }
+
+  70% {
+    transform: scale(1.1);
+    box-shadow: 0 0 0 10px rgba(225, 29, 72, 0);
+  }
+
+  100% {
+    transform: scale(1);
+    box-shadow: 0 0 0 0 rgba(225, 29, 72, 0);
+  }
+}

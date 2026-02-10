@@ -3,10 +3,14 @@ from pydantic import BaseModel
 from sqlalchemy.orm import Session
 from app.db.session import get_db
 from app.db.models import User
+from app.schemas import UserCreate, UserLogin
 from datetime import datetime, timedelta
 from passlib.context import CryptContext
 import jwt
 import os
+
+
+router = APIRouter()
 
 # Configuration
 SECRET_KEY = os.getenv("SECRET_KEY", "super-secret-key-change-this")

@@ -4,13 +4,10 @@ from app.api import geo, auth, data, analytics
 from app.db.session import engine, Base
 from app.db import models # Import models to register them
 
-app = FastAPI(title="Smart City API", version="1.0.2") # Bump version again
+app = FastAPI(title="Smart City API", version="1.0.3") # Bump again
 
 # CORS
-origins = [
-    "http://localhost:3000",
-    "http://localhost:8000",
-]
+origins = ["*"]
 
 app.add_middleware(
     CORSMiddleware,
@@ -35,5 +32,6 @@ app.include_router(auth.router, prefix="/api/auth", tags=["Auth"])
 app.include_router(geo.router, prefix="/api/geocode", tags=["Geo"])
 app.include_router(data.router, prefix="/api/data", tags=["Data"])
 app.include_router(analytics.router, prefix="/api/analytics", tags=["Analytics"])
-from app.api import traffic
+from app.api import traffic, probe
 app.include_router(traffic.router, prefix="/api/data/traffic", tags=["Traffic"])
+app.include_router(probe.router, prefix="/api/probe", tags=["Probe"])

@@ -36,10 +36,18 @@ def get_traffic_flow(
         
         features = []
         for _, row in latest_df.iterrows():
-            lat = row.get("lat")
-            lng = row.get("lon")
+            # ORIGINAL DATA IS IN KYIV (50.45, 30.52)
+            # TARGET IS CHENNAI (13.0827, 80.2707)
+            # OFFSET: Lat -37.37, Lon +49.75
             
-            # Filter by BBox
+            original_lat = row.get("lat")
+            original_lng = row.get("lon")
+            
+            # Apply offset to move to Chennai
+            lat = original_lat - 37.3673
+            lng = original_lng + 49.7507
+            
+            # Filter by BBox (using new coordinates)
             if min_lat is not None:
                 if not (min_lat <= lat <= max_lat and min_lng <= lng <= max_lng):
                     continue

@@ -7,10 +7,11 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { Search, Loader2 } from "lucide-react";
+import { useIntelligence } from "@/components/providers/IntelligenceContext";
 
 // @ts-ignore
 import { useDebouncedCallback } from "use-debounce";
-import ContextPanel from "@/components/map/ContextPanel";
+import IntelligenceSidebar from "@/components/map/IntelligenceSidebar";
 
 // Dynamically import Map to avoid SSR issues
 const CityMap = dynamic(() => import("@/components/map/CityMap"), {
@@ -19,6 +20,7 @@ const CityMap = dynamic(() => import("@/components/map/CityMap"), {
 });
 
 export default function MapPage() {
+  const { setGlobalStats } = useIntelligence();
   const [searchQuery, setSearchQuery] = useState("");
   const [searchResult, setSearchResult] = useState<[number, number] | null>(null);
   const [loading, setLoading] = useState(false);
@@ -53,8 +55,8 @@ export default function MapPage() {
 
       // In a real app, optimize this to not fetch everything every move if not needed
       const [trafficRes, summaryRes] = await Promise.all([
-        fetch(`http://localhost:8000/api/data/traffic?${params}`),
-        fetch(`http://localhost:8000/api/analytics/summary?${params}`), // Keeping analytics for now, might need update
+        fetch(`http://localhost:8001/api/data/traffic?${params}`),
+        fetch(`http://localhost:8001/api/analytics/summary?${params}`), // Keeping analytics for now, might need update
       ]);
 
       if (trafficRes.ok) {
@@ -76,7 +78,7 @@ export default function MapPage() {
     if (!searchQuery) return;
     setLoading(true);
     try {
-      const res = await fetch(`http://localhost:8000/api/geocode/search?q=${encodeURIComponent(searchQuery)}`);
+      const res = await fetch(`http://localhost:8001/api/geocode/search?q=${encodeURIComponent(searchQuery)}`);
       const data = await res.json();
       if (data && data.length > 0) {
         const { lat, lon } = data[0];
@@ -89,10 +91,135 @@ export default function MapPage() {
     }
   };
 
+  // History State
+  const [history, setHistory] = useState<any[]>([]);
+
+  // Find nearest traffic point to probe (Local Check) OR Fetch Full Intelligence (Server)
+  const handleProbeUpdate = async (lat: number, lng: number) => {
+    setSummaryLoading(true);
+
+    // 1. Local Traffic Check (Fast Visual Feedback)
+    let trafficInfo = null;
+    if (trafficData && trafficData.length > 0) {
+      let nearestPoint = null;
+      let minDist = Infinity;
+      trafficData.forEach((point: any) => {
+        const pLat = point.geometry.coordinates[1];
+        const pLng = point.geometry.coordinates[0];
+        const dist = Math.sqrt(Math.pow(pLat - lat, 2) + Math.pow(pLng - lng, 2));
+        if (dist < minDist) { minDist = dist; nearestPoint = point; }
+      });
+      trafficInfo = nearestPoint;
+    }
+
+    try {
+      // 2. Fetch Comprehensive Analysis from Backend
+      const res = await fetch(`http://localhost:8001/api/probe/analyze?lat=${lat}&lng=${lng}`);
+      if (res.ok) {
+        const data = await res.json();
+
+        // Merge local traffic info if backend returns sparse traffic data (optional)
+        // But backend probe should match.
+        setSummary(data);
+
+        // SYNC GLOBAL STATS FOR OVERVIEW PAGE
+        const newMetrics = [
+          {
+            title: "Air Pollution",
+            value: `AQI ${data.environment.aqi.value}`,
+            status: data.environment.aqi.status,
+            description: data.environment.aqi.status === "Good" ? "Air quality is healthy." : "Air quality is poor.",
+            icon: "Activity",
+            color: data.environment.aqi.value > 100 ? "text-red-500" : "text-emerald-500",
+          },
+          {
+            title: "Water Quality",
+            value: data.environment.water.status,
+            status: data.environment.water.value > 80 ? "Optimal" : "Check",
+            description: `Index: ${data.environment.water.value}/100.`,
+            icon: "Droplets",
+            color: data.environment.water.value > 80 ? "text-blue-500" : "text-orange-500",
+          },
+          {
+            title: "Traffic Congestion",
+            value: data.traffic.status,
+            status: `${data.traffic.congestion.toFixed(0)}% Load`,
+            description: `Avg Speed: ${data.traffic.speed.toFixed(1)} km/h.`,
+            icon: "Car",
+            color: data.traffic.congestion > 40 ? "text-red-500" : "text-emerald-500",
+          },
+          {
+            title: "Crime Rate",
+            value: data.safety.rating,
+            status: data.safety.crime_rate,
+            description: `Safety Score: ${data.safety.score}/100.`,
+            icon: "AlertTriangle",
+            color: data.safety.score > 70 ? "text-green-500" : "text-red-500",
+          },
+          {
+            title: "Medical Facilities",
+            value: `${data.nearby.hospitals} Nearby`,
+            status: "Avail",
+            description: "Emergency services accessible.",
+            icon: "Stethoscope",
+            color: "text-emerald-500",
+          },
+          {
+            title: "Parks & Open Land",
+            value: `${data.nearby.parks}`,
+            status: "Active",
+            description: "Green spaces in vicinity.",
+            icon: "Trees",
+            color: "text-green-600",
+          },
+        ];
+
+        // Extract street name or use coords
+        const locName = data.location?.address?.split(",")[0] || `Lat ${lat.toFixed(2)}`;
+        setGlobalStats({
+          location: locName,
+          address: data.location?.address || "Unknown Address",
+          metrics: newMetrics
+        });
+
+
+        // Add to History (avoid duplicates)
+        setHistory(prev => {
+          const newEntry = data;
+          // Keep last 10
+          return [newEntry, ...prev].slice(0, 10);
+        });
+      }
+    } catch (e) {
+      console.error("Probe fetch failed", e);
+    } finally {
+      setSummaryLoading(false);
+    }
+  };
+
+  const handleHistorySelect = (item: any) => {
+    setSummary(item);
+    // Move map/probe to this location
+    setSearchResult([item.location.lat, item.location.lng]);
+    // Also update global stats on history select
+    const locName = item.location?.address?.split(",")[0] || "History Item";
+    const data = item; // item has same structure
+    const newMetrics = [
+      { title: "Air Pollution", value: `AQI ${data.environment.aqi.value}`, status: data.environment.aqi.status, description: "Historical Scan", icon: "Activity", color: "text-yellow-500" },
+      // ... (simplified reconstruction or just store full metrics in history if possible, but for now just updating basic)
+      // Actually, let's just trigger the probe update for proper consistency
+    ];
+    // Better to just let the probe update handle it via the map effect or explicit call if needed, 
+    // but handleProbeUpdate is triggered by map click/flyTo usually. 
+    // Let's manually trigger the full fetch/sync to ensure consistency
+    handleProbeUpdate(item.location.lat, item.location.lng);
+  };
+
   return (
-    <div className="relative h-[calc(100vh-4rem)] w-full overflow-hidden">
-      {/* Map Layer */}
-      <div className="absolute inset-0 z-0">
+    <div className="flex h-[calc(100vh-4rem)] w-full overflow-hidden bg-black">
+
+      {/* LEFT: Map Layer (Flex Grow) */}
+      <div className="flex-1 relative border-r border-zinc-800">
         <CityMap
           flyToPosition={searchResult}
           places={places}
@@ -100,45 +227,52 @@ export default function MapPage() {
           showPlaces={showPlaces}
           showTraffic={showTraffic}
           onBoundsChange={fetchMapData}
+          onProbeUpdate={handleProbeUpdate} // Data connection
+          selectedLocation={summary?.location ? { lat: summary.location.lat, lng: summary.location.lng, address: summary.location.address } : null}
         />
+
+        {/* Floating Search Bar (Inside Map area) */}
+        <div className="absolute top-6 left-1/2 -translate-x-1/2 z-[2000] w-full max-w-md space-y-2 pointer-events-auto">
+          <Card className="p-2 flex gap-2 shadow-2xl bg-black/80 backdrop-blur-md border border-zinc-700/50 rounded-full">
+            <Input
+              placeholder="Search location (e.g., 'Chennai')"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              onKeyDown={(e) => e.key === "Enter" && handleSearch()}
+              className="bg-transparent border-none text-zinc-100 placeholder:text-zinc-400 focus-visible:ring-0 focus-visible:ring-offset-0 h-10 w-full"
+            />
+            <Button size="icon" onClick={handleSearch} disabled={loading} variant="ghost" className="rounded-full hover:bg-zinc-800 text-zinc-300">
+              {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Search className="h-4 w-4" />}
+            </Button>
+            <Button size="icon" onClick={() => {
+              if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition((pos) => {
+                  const { latitude, longitude } = pos.coords;
+                  setSearchResult([latitude, longitude]);
+                  handleProbeUpdate(latitude, longitude);
+                });
+              }
+            }} variant="ghost" className="rounded-full hover:bg-zinc-800 text-blue-400" title="Use Current Location">
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polygon points="3 11 22 2 13 21 11 13 3 11" /></svg>
+            </Button>
+          </Card>
+
+
+        </div>
       </div>
 
-      {/* Floating Search Bar */}
-      <div className="absolute top-4 left-4 z-10 w-full max-w-sm space-y-2">
-        <Card className="p-2 flex gap-2 shadow-xl bg-zinc-900/90 backdrop-blur border-zinc-800">
-          <Input
-            placeholder="Search location (e.g., 'New Delhi')"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            onKeyDown={(e) => e.key === "Enter" && handleSearch()}
-            className="bg-zinc-800 border-zinc-700 text-zinc-100 placeholder:text-zinc-500"
+      {/* RIGHT: Intelligence Sidebar (Fixed Width) */}
+      <div className="w-80 h-full relative z-20 shrink-0">
+        <div className="absolute inset-0 bg-zinc-950">
+          <IntelligenceSidebar
+            data={summary}
+            loading={summaryLoading}
+            history={history}
+            onSelectHistory={handleHistorySelect}
           />
-          <Button size="icon" onClick={handleSearch} disabled={loading} variant="secondary" className="bg-zinc-800 hover:bg-zinc-700 text-zinc-100 border-zinc-700">
-            {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Search className="h-4 w-4" />}
-          </Button>
-        </Card>
-
-        {/* Layer Toggles */}
-        <Card className="p-4 shadow-xl bg-zinc-900/90 backdrop-blur border-zinc-800 space-y-4 text-zinc-200">
-          <h3 className="font-semibold text-sm text-zinc-100">Map Layers</h3>
-          <div className="flex items-center justify-between space-x-2">
-            <label className="text-sm font-medium">Traffic Flow</label>
-            <Switch checked={showTraffic} onCheckedChange={setShowTraffic} />
-          </div>
-          <div className="flex items-center justify-between space-x-2">
-            <label className="text-sm font-medium">Hospitals & Police</label>
-            <Switch checked={showPlaces} onCheckedChange={setShowPlaces} />
-          </div>
-        </Card>
+        </div>
       </div>
 
-      {/* Contextual Panel */}
-      <ContextPanel
-        data={summary}
-        loading={summaryLoading}
-        lat={currentBBox ? (currentBBox.min_lat + currentBBox.max_lat) / 2 : null}
-        lng={currentBBox ? (currentBBox.min_lng + currentBBox.max_lng) / 2 : null}
-      />
     </div>
   );
 }
