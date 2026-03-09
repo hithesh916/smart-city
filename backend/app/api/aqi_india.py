@@ -8,14 +8,8 @@ from typing import List, Optional
 
 router = APIRouter()
 
-DATA_DIR = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))), "data", "aqi_india")
-COORD_FILE = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))), "data", "station_coordinates.json")
-
-def load_station_coordinates():
-    if not os.path.exists(COORD_FILE):
-        return {}
-    with open(COORD_FILE, "r") as f:
-        return json.load(f)
+DATA_DIR = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))), "data")
+CSV_FILE = os.path.join(DATA_DIR, "smart_city_air_humidity_2025_2026.csv")
 
 @router.get("/")
 def get_india_aqi(
@@ -25,89 +19,53 @@ def get_india_aqi(
     """
     Returns the latest available AQI data for all stations in India.
     """
-    coords = load_station_coordinates()
-    if not coords:
-        # If no coordinates yet, we can't map them.
-        # Ideally, we should trigger the geocoding script or return empty.
-        # For now, return empty feature collection
-        return {
-            "type": "FeatureCollection",
-            "features": []
-        }
+    if not os.path.exists(CSV_FILE):
+        return {"type": "FeatureCollection", "features": []}
 
     features = []
-    
-    # 1. Iterate over all city CSVs
-    csv_files = glob.glob(os.path.join(DATA_DIR, "*.csv"))
-    
-    for file in csv_files:
-        try:
-            city_name = os.path.basename(file).split("_")[0].title()
-            df = pd.read_csv(file)
+    try:
+        df = pd.read_csv(CSV_FILE)
+        
+        # Take latest record per Station
+        df_latest = df.sort_values('Date').groupby('StationName').last().reset_index()
+
+        for _, row in df_latest.iterrows():
+            lat = row.get("Latitude")
+            lng = row.get("Longitude")
             
-            if "Location" not in df.columns:
+            if pd.isna(lat) or pd.isna(lng):
                 continue
                 
-            # We want the LATEST data for each location.
-            # Assuming the CSV is time-series, we take the last row for each unique Location.
-            # Or filter by date if needed. Taking last recorded value is a safe bet for "latest known".
-            
-            # Group by Location and take the last valid entry
-            latest_df = df.groupby("Location").last().reset_index()
-            
-            for _, row in latest_df.iterrows():
-                location_name = row["Location"]
-                
-                # Construct query key to match geocoding script
-                query_key = f"{location_name}, {city_name}, India"
-                
-                lat = None
-                lng = None
-                
-                # Try to find coordinates
-                if query_key in coords and coords[query_key]:
-                    lat = coords[query_key]["lat"]
-                    lng = coords[query_key]["lng"]
-                
-                if lat is None or lng is None:
-                    continue
-                    
-                # Filter by BBox if provided
-                if min_lat is not None:
-                     if not (min_lat <= lat <= max_lat and min_lng <= lng <= max_lng):
-                         continue
+            # Filter by BBox if provided
+            if min_lat is not None:
+                 if not (min_lat <= lat <= max_lat and min_lng <= lng <= max_lng):
+                     continue
 
-                # Prepare properties
-                properties = {
-                    "city": city_name,
-                    "location": location_name,
-                    "timestamp": row.get("Timestamp", "N/A"),
-                    "pm25": row.get("PM2.5", None),
-                    "pm10": row.get("PM10", None),
-                    "no2": row.get("NO2", None),
-                    "so2": row.get("SO2", None),
-                    "co": row.get("CO", None),
-                    "o3": row.get("O3", None),
-                    "aqi": row.get("PM2.5", 0) # Simplified AQI proxy using PM2.5 if AQI col missing
-                }
-                
-                # Check for explicit AQI column if exists, otherwise assume PM2.5 is the main driver
-                if "AQI" in row:
-                     properties["aqi"] = row["AQI"]
+            properties = {
+                "city": row.get("City", "Unknown"),
+                "location": row.get("StationName", "Unknown"),
+                "timestamp": row.get("Date", "N/A"),
+                "pm25": row.get("PM2.5", None),
+                "pm10": row.get("PM10", None),
+                "no2": row.get("NO2", None),
+                "so2": None,
+                "co": None,
+                "o3": None,
+                "aqi": row.get("AQI", int(row.get("PM2.5", 0)))
+            }
 
-                feature = {
-                    "type": "Feature",
-                    "geometry": {
-                        "type": "Point",
-                        "coordinates": [lng, lat]
-                    },
-                    "properties": properties
-                }
-                features.append(feature)
-                
-        except Exception as e:
-            print(f"Error processing {file}: {e}")
-            continue
+            feature = {
+                "type": "Feature",
+                "geometry": {
+                    "type": "Point",
+                    "coordinates": [lng, lat]
+                },
+                "properties": properties
+            }
+            features.append(feature)
+            
+    except Exception as e:
+        print(f"Error processing AQI data: {e}")
 
     return {
         "type": "FeatureCollection",

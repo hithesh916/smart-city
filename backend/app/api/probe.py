@@ -42,7 +42,7 @@ def analyze_location(lat: float, lng: float, days: int = 7):
     congestion = 0
     try:
         base_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-        traffic_file = os.path.join(base_dir, "data", "traffic", "traffic_flow.csv")
+        traffic_file = os.path.join(base_dir, "data", "smart_city_traffic_2025_2026.csv")
         
         if os.path.exists(traffic_file):
             df = pd.read_csv(traffic_file)
@@ -51,12 +51,17 @@ def analyze_location(lat: float, lng: float, days: int = 7):
             row_idx = int((lat * 100 + lng * 100) % len(df))
             row = df.iloc[row_idx]
             
+            # Map congestion string to a float score
+            cong_map = {'Low': 20.0, 'Moderate': 50.0, 'High': 75.0, 'Severe': 95.0}
+            cong_level = row.get("Avg_Congestion_Level", "Low")
+            cong_score = cong_map.get(cong_level, 0.0)
+
             traffic_data = {
-                "congestion": float(row.get("congestion", 0)),
-                "speed": float(row.get("avg_speed_kmh", 0)),
-                "status": "High Traffic" if row.get("congestion", 0) > 40 else "Moderate"
+                "congestion": cong_score,
+                "speed": float(row.get("Average_Speed_kmh", 0)),
+                "status": "High Traffic" if cong_score > 40 else "Moderate"
             }
-            congestion = float(row.get("congestion", 0))
+            congestion = cong_score
     except Exception as e:
         print(f"Traffic lookup error: {e}")
 

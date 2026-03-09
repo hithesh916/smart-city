@@ -1,0 +1,52 @@
+{
+  "Hyderabad - Central University, Hyderabad, India": {
+    "lat": 17.4030446,
+    "lng": 78.5096907,
+    "address": "Dr Dilip M Babu MD DM - Best Nephrologist and Kidney Transplant Physician in Hyderabad, MCH No 1-9-1114 to 1117,, Osmania University Road, Padma Colony, Vidyanagar, Ward 85 Adikmet, Greater Hyderabad Municipal Corporation Central Zone, Hyderabad, Amberpet mandal, Hyderabad, Telangana, 500044, India"
+  },
+  "Delhi - Punjabi Bagh, Delhi, India": {
+    "lat": 28.6554154,
+    "lng": 77.047835,
+    "address": "Veolia Water Treatment Research India Ltd., B-30, Ranhola, Najafgarh Nangloi Road, Punjabi Bagh Tehsil, West Delhi, Delhi, 110041, India"
+  },
+  "Bengaluru - Silk Board, Bengaluru, India": {
+    "lat": 12.9767936,
+    "lng": 77.590082,
+    "fallback": true
+  },
+  "Mumbai - Chhatrapati Shivaji Intl. Airport (T2), Mumbai, India": {
+    "lat": 19.054999,
+    "lng": 72.8692035,
+    "fallback": true
+  },
+  "Visakhapatnam - GVM Corporation, Visakhapatnam, India": {
+    "lat": 17.6935526,
+    "lng": 83.2921297,
+    "fallback": true
+  },
+  "Chennai - Alandur Bus Depot, Chennai, India": {
+    "lat": 13.0836939,
+    "lng": 80.270186,
+    "fallback": true
+  },
+  "Kolkata - Rabindra Bharati University, Kolkata, India": {
+    "lat": 22.5726459,
+    "lng": 88.3638953,
+    "fallback": true
+  },
+  "Jaipur - Police Commissionerate, Jaipur, India": {
+    "lat": 26.9160258,
+    "lng": 75.8015394,
+    "address": "Police Commissionerate Jaipur, MI Road, Ashok Marg, Jaipur, Jaipur Municipal Corporation, Jaipur Tehsil, Jaipur, Rajasthan, 302001, India"
+  },
+  "Lucknow - Lalbagh, Lucknow, India": {
+    "lat": 26.8381,
+    "lng": 80.9346001,
+    "fallback": true
+  },
+  "Gwalior - City Center, Gwalior, India": {
+    "lat": 26.2037247,
+    "lng": 78.1573628,
+    "fallback": true
+  }
+}

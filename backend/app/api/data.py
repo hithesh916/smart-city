@@ -30,7 +30,7 @@ def get_air_quality(
     """
     Get Real Air Quality data, optionally filtered by Bounding Box.
     """
-    file_path = os.path.join(DATA_DIR, "aqi_delhi.csv")
+    file_path = os.path.join(DATA_DIR, "smart_city_air_humidity_2025_2026.csv")
     if not os.path.exists(file_path):
         raise HTTPException(status_code=404, detail="AQI Data source not found")
         
@@ -58,7 +58,7 @@ def get_water_quality(
     """
     Get Real Water Quality data from seeded CSV, filterable by Bbox.
     """
-    file_path = os.path.join(DATA_DIR, "water_delhi.csv")
+    file_path = os.path.join(DATA_DIR, "smart_city_water_quality_2025_2026.csv")
     if not os.path.exists(file_path):
         raise HTTPException(status_code=404, detail="Water Data source not found")
         

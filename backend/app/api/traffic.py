@@ -6,8 +6,8 @@ from typing import Optional
 
 router = APIRouter()
 
-DATA_DIR = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))), "data", "traffic")
-CSV_FILE = os.path.join(DATA_DIR, "traffic_flow.csv")
+DATA_DIR = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))), "data")
+CSV_FILE = os.path.join(DATA_DIR, "smart_city_traffic_2025_2026.csv")
 
 @router.get("/")
 def get_traffic_flow(
@@ -16,7 +16,7 @@ def get_traffic_flow(
 ):
     """
     Returns the latest traffic flow data as GeoJSON.
-    Filters by timestamp to get the most recent snapshot.
+    Filters by Date to get the most recent snapshot.
     """
     if not os.path.exists(CSV_FILE):
         return {"type": "FeatureCollection", "features": []}
@@ -26,28 +26,22 @@ def get_traffic_flow(
         df = pd.read_csv(CSV_FILE)
         
         # Ensure timestamp is datetime
-        df['timestamp'] = pd.to_datetime(df['timestamp'])
+        df['Date'] = pd.to_datetime(df['Date'])
         
         # Get latest timestamp
-        latest_time = df['timestamp'].max()
+        latest_time = df['Date'].max()
         
         # Filter for latest data snapshot
-        latest_df = df[df['timestamp'] == latest_time]
+        latest_df = df[df['Date'] == latest_time]
         
         features = []
+        cong_map = {'Low': 20.0, 'Moderate': 50.0, 'High': 75.0, 'Severe': 95.0}
+
         for _, row in latest_df.iterrows():
-            # ORIGINAL DATA IS IN KYIV (50.45, 30.52)
-            # TARGET IS CHENNAI (13.0827, 80.2707)
-            # OFFSET: Lat -37.37, Lon +49.75
+            lat = row.get("Latitude")
+            lng = row.get("Longitude")
             
-            original_lat = row.get("lat")
-            original_lng = row.get("lon")
-            
-            # Apply offset to move to Chennai
-            lat = original_lat - 37.3673
-            lng = original_lng + 49.7507
-            
-            # Filter by BBox (using new coordinates)
+            # Filter by BBox
             if min_lat is not None:
                 if not (min_lat <= lat <= max_lat and min_lng <= lng <= max_lng):
                     continue
@@ -59,12 +53,12 @@ def get_traffic_flow(
                     "coordinates": [lng, lat]
                 },
                 "properties": {
-                    "intersection_id": row.get("intersection_id"),
-                    "congestion": row.get("congestion"),
-                    "flow_vpm": row.get("flow_vpm"),
-                    "avg_speed": row.get("avg_speed_kmh"),
-                    "incidents": row.get("incidents"),
-                    "timestamp": str(row.get("timestamp"))
+                    "intersection_id": row.get("Location_ID"),
+                    "congestion": cong_map.get(row.get("Avg_Congestion_Level", "Low"), 0),
+                    "flow_vpm": row.get("Daily_Vehicle_Count"),
+                    "avg_speed": row.get("Average_Speed_kmh"),
+                    "incidents": 0,
+                    "timestamp": str(row.get("Date").date())
                 }
             }
             features.append(feature)

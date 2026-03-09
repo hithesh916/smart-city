@@ -24,7 +24,7 @@ def get_view_summary(
     }
 
     # 1. AQI Stats
-    aqi_path = os.path.join(DATA_DIR, "aqi_delhi.csv")
+    aqi_path = os.path.join(DATA_DIR, "smart_city_air_humidity_2025_2026.csv")
     if os.path.exists(aqi_path):
         df_aqi = pd.read_csv(aqi_path)
         filtered_aqi = df_aqi[
@@ -35,7 +35,7 @@ def get_view_summary(
             summary["avg_aqi"] = int(filtered_aqi["AQI"].mean())
 
     # 2. Water Stats
-    water_path = os.path.join(DATA_DIR, "water_delhi.csv")
+    water_path = os.path.join(DATA_DIR, "smart_city_water_quality_2025_2026.csv")
     if os.path.exists(water_path):
         df_water = pd.read_csv(water_path)
         filtered_water = df_water[
